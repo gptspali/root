@@ -1,9 +1,13 @@
 function CameraApp() {
   const [photoDataUrl, setPhotoDataUrl] = React.useState(null);
   const [error, setError] = React.useState("");
+  const isActiveRef = React.useRef(true);
+  const hasShotRef = React.useRef(false);
 
   const takePhoto = async () => {
-    setError("");
+    if (!isActiveRef.current) return;
+    // сброс ошибки только если компонент активен и она была
+    if (isActiveRef.current) setError((prev) => (prev ? "" : prev));
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user" },
@@ -27,15 +31,28 @@ function CameraApp() {
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL("image/png");
-      setPhotoDataUrl(dataUrl);
+      if (isActiveRef.current) setPhotoDataUrl(dataUrl);
 
       stream.getTracks().forEach((t) => t.stop());
     } catch (e) {
-      setError("Нет доступа к камере. Разрешите доступ в браузере.");
+      if (isActiveRef.current) setError("Нет доступа к камере. Разрешите доступ в браузере.");
       console.error(e);
     }
   };
-  takePhoto();
+
+  React.useEffect(() => {
+    isActiveRef.current = true;
+    const rafId = requestAnimationFrame(() => {
+      if (!hasShotRef.current) {
+        hasShotRef.current = true;
+        void takePhoto();
+      }
+    });
+    return () => {
+      isActiveRef.current = false;
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   console.log(photoDataUrl);
   return (
