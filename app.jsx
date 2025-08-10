@@ -36,6 +36,7 @@ function CameraApp() {
     }
   };
 
+  console.log(photoDataUrl);
   return (
     <div style={{ maxWidth: 360, margin: "20px auto", textAlign: "center", fontFamily: "sans-serif" }}>
       <h1 style={{ fontSize: 22 }}>Сделать фото</h1>
