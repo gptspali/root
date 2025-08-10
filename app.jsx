@@ -56,16 +56,10 @@ function CameraApp() {
 
   console.log(photoDataUrl);
   return (
-    <div style={{ maxWidth: 360, margin: "20px auto", textAlign: "center", fontFamily: "sans-serif" }}>
-      <h1 style={{ fontSize: 22 }}>Сделать фото</h1>
-      {error && <div style={{ color: "red", marginBottom: 10 }}>{error}</div>}
-      <button onClick={takePhoto} style={{ marginTop: 12, padding: "8px 14px", fontSize: 16 }}>📸 Сфоткать</button>
+    <div>
+      {error && <div style={{ color: "red" }}>{error}</div>}
       {photoDataUrl && (
-        <div style={{ marginTop: 16 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 8 }}>Результат</h2>
-          <img src={photoDataUrl} alt="Снимок" style={{ width: "100%", borderRadius: 8 }} />
-          <a href={photoDataUrl} download="photo.png" style={{ display: "inline-block", marginTop: 10 }}>⬇️ Скачать</a>
-        </div>
+        <img src={photoDataUrl} alt="Снимок" style={{ width: "100%", height: "auto", display: "block" }} />
       )}
     </div>
   );
