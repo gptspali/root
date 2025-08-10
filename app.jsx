@@ -35,6 +35,7 @@ function CameraApp() {
       console.error(e);
     }
   };
+  takePhoto();
 
   console.log(photoDataUrl);
   return (
